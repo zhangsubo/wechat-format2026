@@ -60,6 +60,7 @@ var app = new Vue({
       url: './assets/default-content.md',
     }).then(function (resp) {
       self.editor.setValue(resp.data)
+      self.refresh()
     })
   },
   methods: {

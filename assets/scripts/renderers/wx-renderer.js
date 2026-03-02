@@ -41,6 +41,24 @@ var WxRenderer = function (opts) {
     return mapping
   }
 
+  var escapeHtml = function (str) {
+    if (typeof str !== 'string') return str
+    return str.replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;')
+  }
+
+  var escapeAttr = function (str) {
+    if (typeof str !== 'string') return str
+    return str.replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;')
+  }
+
   var S = function (tokenName) {
     var arr = []
     var dict = styleMapping[tokenName]
@@ -115,7 +133,7 @@ var WxRenderer = function (opts) {
         + '</pre></section>'
     }
     renderer.codespan = function (text, infostring) {
-      return '<code ' + S('codespan') + '>' + text + '</code>'
+      return '<code ' + S('codespan') + '>' + escapeHtml(text) + '</code>'
     }
     renderer.listitem = function (text) {
       return '<span ' + S('listitem') + '><span style="margin-right: 10px;"><%s/></span>' + text + '</span>';
@@ -133,11 +151,16 @@ var WxRenderer = function (opts) {
       return '<p ' + S('ol') + '>' + text + '</p>';
     }
     renderer.image = function (href, title, text) {
-      return '<img ' + S(ENV_STETCH_IMAGE ? 'image' : 'image_org') + ' src="' + href + '" title="'+title+'" alt="'+text+'"/>'
+      var safeHref = href.replace(/^javascript:/i, '').replace(/^data:/i, '')
+      var safeTitle = escapeAttr(title || '')
+      var safeText = escapeHtml(text || '')
+      return '<img ' + S(ENV_STETCH_IMAGE ? 'image' : 'image_org') + ' src="' + safeHref + '" title="'+safeTitle+'" alt="'+safeText+'"/>'
     }
     renderer.link = function (href, title, text) {
+      var safeHref = href.replace(/^javascript:/i, '').replace(/^data:/i, '')
+      var safeTitle = escapeAttr(title || text)
       if (href.indexOf('https://mp.weixin.qq.com') === 0) {
-        return '<a href="' + href +'" title="' + (title || text) + '" ' + S('wx_link') +'>' + text + '</a>'; 
+        return '<a href="' + safeHref +'" title="' + safeTitle + '" ' + S('wx_link') +'>' + text + '</a>'; 
       }else if( href === text){
         return text;
       } else {
@@ -145,7 +168,7 @@ var WxRenderer = function (opts) {
           var ref = addFootnote(title || text, href)
           return '<span ' + S('link') + '>' + text + '<sup>['+ref+']</sup></span>'; 
         } else {
-          return '<a href="' + href +'" title="' + (title || text) + '" ' + S('link') + '>' + text + '</a>'; 
+          return '<a href="' + safeHref +'" title="' + safeTitle + '" ' + S('link') + '>' + text + '</a>'; 
         }
       }
     }
